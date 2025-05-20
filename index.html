@@ -7,16 +7,41 @@
 </head>
 <body>
 	<div class="spc-main">
+    	<button type="button" id="btn-load" style="display:block;">Load Full Storm Reports</button>
+    	<button type="button" id="btn-unload" style="display:none;">Collapse Storm Reports</button>
   		<div id="spc-container"></div>
-  </div>
+    </div>
   <script>
   	const spc_container = document.getElementById("spc-container");
-    const now = new Date();
+    const spc_gif = document.getElementById("spc-rpt-gif");
+    const load_btn = document.getElementById("btn-load");
+    const unload_btn = document.getElementById("btn-unload");
     
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    spc_container.innerHTML = `<embed type="text/html" src="https://www.spc.noaa.gov/climo/reports/${yy}${mm}${dd}_prt_rpts.html" class="spc-embed"/>`
+    function loadReports() {
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      spc_container.innerHTML = `<embed type="text/html" src="https://www.spc.noaa.gov/climo/reports/${yy}${mm}${dd}_prt_rpts.html" class="spc-embed"/>`
+      load_btn.style.display = "none";
+      unload_btn.style.display = "block";
+    }
+    
+    function unloadReports() {
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      spc_container.innerHTML = `<img src="https://www.spc.noaa.gov/climo/reports/${yy}${mm}${dd}_rpts.gif" id="spc-rpt-gif">`
+      load_btn.style.display = "block";
+      unload_btn.style.display = "none";
+    }
+    
+    unloadReports();
+    
+  	load_btn.addEventListener("click", loadReports); 
+  	unload_btn.addEventListener("click", unloadReports); 
+    
   </script>
   <style>
   	body {
@@ -26,8 +51,7 @@
     }
     .spc-main {
     	display: flex;
-        flex-direction: row;
-        flex-wrap:wrap;
+        flex-direction: column;
     }
     #spc-container {
     	width: 100%;
