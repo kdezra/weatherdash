@@ -7,17 +7,16 @@
 </head>
 <body>
 	<div class="spc-main">
-  		<div id="spc-container-today"></div>
+  		<div id="spc-container"></div>
   </div>
   <script>
-  	const spc_container_yesterday = document.getElementById("spc-container-yesterday");
-  	const spc_container_today = document.getElementById("spc-container-today");
+  	const spc_container = document.getElementById("spc-container");
     const now = new Date();
     
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
-    spc_container_today.innerHTML = `<embed type="text/html" src="https://www.spc.noaa.gov/climo/reports/${yy}${mm}${dd}_prt_rpts.html" class="spc-embed"/>`
+    spc_container.innerHTML = `<embed type="text/html" src="https://www.spc.noaa.gov/climo/reports/${yy}${mm}${dd}_prt_rpts.html" class="spc-embed"/>`
   </script>
   <style>
   	body {
@@ -30,7 +29,7 @@
         flex-direction: row;
         flex-wrap:wrap;
     }
-    #spc-container-today {
+    #spc-container {
     	width: 100%;
     }
     .spc-embed {
