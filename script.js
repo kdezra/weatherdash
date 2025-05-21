@@ -15,74 +15,66 @@ function appendChildren(parent, children) {
 
 const SPCStormReports = {
   id: "spc-reports",
-  embedUrl: "https://www.spc.noaa.gov/climo/reports/000101_prt_rpts.html",
-  gifUrl: "https://www.spc.noaa.gov/climo/reports/000101_rpts.gif",
+  name: "Today's SPC Storm Reports",
+  embedUrl: "https://www.spc.noaa.gov/climo/reports/today_prt_rpts.html",
+  gifUrl: "https://www.spc.noaa.gov/climo/reports/today.gif",
   init: false,
   refresh: function () {
-    this.init = false
-    this.embedUrl = "https://www.spc.noaa.gov/climo/reports/today_prt_rpts.html"
-    this.gifUrl = "https://www.spc.noaa.gov/climo/reports/today.gif"
     this.init = true
   },
-  show: async function () {
+  show: function () {
+    this.heading.style.display = "block"
     if (!this.init) this.refresh()
     this.div.innerHTML = ""
     const embed = document.createElement("embed")
     embed.type = "text/html"
     embed.src = this.embedUrl
     embed.className = "spc-embed"
-    const heading = document.createElement("h2")
-    heading.id = "esri-head"
-    heading.innerText = "Today's Storm Reports"
-    this.div.appendChild(heading)
     this.div.appendChild(embed)
   },
-  hide: async function () {
+  hide: function () {
+    this.heading.style.display = "block"
     if (!this.init) this.refresh()
     this.div.innerHTML = ""
     const img = document.createElement("img")
     img.src = this.gifUrl
     img.id = "spc-rpt-gif"
-    const heading = document.createElement("h2")
-    heading.id = "esri-head"
-    heading.innerText = "Today's Storm Reports"
-    this.div.appendChild(heading)
     this.div.appendChild(img)
   },
 }
 
 const SPCReportsESRIMap = {
   id: "spc-esri",
+  name: "SPC Storm Reports Map (Interactive)",
+  url: "https://www.spc.noaa.gov/climo/gm.php?rpt=today",
   init: false,
   refresh: function () {
-    this.init = false
     this.init = true
   },
   show: function () {
-    const dateStr = getDateString(new Date(), 6)
-
+    this.heading.style.display = "block"
+    this.wrapper.style.display = "block"
     this.div.innerHTML = ""
     const iframe = document.createElement("iframe")
     const attrs = {
       width: "100%",
       height: "400",
       scrolling: "no",
-      src: `https://www.spc.noaa.gov/climo/gm.php?rpt=today`,
+      src: this.url,
     }
     for (var k in attrs) iframe.setAttribute(k, attrs[k])
-    const heading = document.createElement("h2")
-    heading.id = "esri-head"
-    heading.innerText = "Interactive Storm Reports Map"
-    this.div.appendChild(heading)
     this.div.appendChild(iframe)
   },
   hide: function () {
+    this.heading.style.display = "none"
+    this.wrapper.style.display = "none"
     this.div.innerHTML = ""
   },
 }
 
 const SPCRSSFeed = {
   id: "spc-rss",
+  name: "SPC RSS Feed",
   url: "https://www.spc.noaa.gov/products/spcrss.xml",
   items: [],
   init: false,
@@ -100,9 +92,7 @@ const SPCRSSFeed = {
         )
         const items = xml.querySelectorAll("item")
         this.items = new Array(...items).map((i) => new SPCFeedItem(i))
-        this.items.sort(
-          (a, b) => -1 * (a.time - b.time),
-        )
+        this.items.sort((a, b) => -1 * (a.time - b.time))
         this.init = true
       })
       .catch((err) => console.log("Fetch Error:", err))
@@ -115,19 +105,17 @@ const SPCRSSFeed = {
     this.items.forEach((i) => this.div.appendChild(i.DOM()))
   },
   show: async function () {
+    this.heading.style.display = "block"
+    this.wrapper.style.display = "block"
     if (!this.init) await this.refresh()
-    const heading = document.createElement("h2")
-    heading.id = "rss-head"
-    heading.innerText = "SPC RSS Feed"
-    this.div.appendChild(heading)
     this.populate()
   },
   hide: function () {
+    this.heading.style.display = "none"
+    this.wrapper.style.display = "none"
     this.div.innerHTML = ""
   },
 }
-
-const objs = [SPCStormReports, SPCReportsESRIMap, SPCRSSFeed]
 
 class SPCFeedItem {
   constructor(item) {
@@ -147,7 +135,7 @@ class SPCFeedItem {
     return new Date(this.pubDate).toLocaleString()
   }
   get time() {
-  	return new Date(this.pubDate).getTime() 
+    return new Date(this.pubDate).getTime()
   }
   get id() {
     let stripped_title = this.title.replace(/\s/g, "")
@@ -188,14 +176,81 @@ class SPCFeedItem {
   }
 }
 
-objs.forEach((obj) => {
-  obj.div = document.getElementById(obj.id)
-  obj.toggle = document.getElementById(obj.id + "_toggle")
+function makeToggle(id, name) {
+  const toggleLab = document.createElement("label")
+  const toggle = document.createElement("input")
+  toggle.type = "checkbox"
+  toggle.id = id + "_toggle"
+  toggleLab.appendChild(toggle)
+  toggleLab.append(name)
+  return toggleLab
+}
+
+const objGroups = {
+  all: [SPCStormReports, SPCReportsESRIMap, SPCRSSFeed],
+  activeReports: {
+    name: "Active Reports",
+    all: [SPCStormReports, SPCReportsESRIMap, SPCRSSFeed],
+  },
+  forecast: {
+    name: "Forecast",
+    all: [],
+  },
+}
+
+objGroups.all.forEach((obj) => {
+  obj.wrapper = document.getElementById(obj.id)
+  obj.div = document.createElement("div")
+  obj.wrapper.className = "object"
+  obj.div.className = "content"
+  obj.heading = document.createElement("h2")
+  obj.heading.id = obj.id + "_head"
+  obj.heading.className = "objectH2"
+  obj.heading.innerText = obj.name
+  obj.heading.style.display = "none"
+  obj.toggleLab = makeToggle(obj.id, obj.name)
+  obj.toggle = obj.toggleLab.firstChild
+
   obj.toggle.addEventListener("change", () => {
     obj.toggle.checked
       ? (localStorage.setItem(obj.id, "On"), obj.show())
       : (localStorage.setItem(obj.id, "Off"), obj.hide())
   })
+
   obj.toggle.checked = localStorage.getItem(obj.id) == "On"
   obj.toggle.dispatchEvent(new Event("change"))
+  appendChildren(obj.wrapper, [obj.heading, obj.div])
+  document.getElementById("toggles").appendChild(obj.toggleLab)
 })
+
+for (var subgroup in objGroups) {
+  if (!objGroups[subgroup].name) continue
+  let groupName = objGroups[subgroup].name
+  let toggleLab = makeToggle(subgroup, groupName)
+  let toggle = toggleLab.firstChild
+  
+  objGroups[subgroup].all.forEach((obj) => {
+    toggle.addEventListener("change", () => {
+      localStorage.setItem(groupName, toggle.checked ? "On" : "Off")
+      if (obj.toggle.checked != toggle.checked) {
+        obj.toggle.checked = toggle.checked
+        obj.toggle.dispatchEvent(new Event("change"))
+      }
+    })
+    obj.toggle.addEventListener("change", () => {
+      if (!obj.toggle.checked) {
+        toggle.checked = false
+        localStorage.setItem(groupName, "Off")
+      }
+    })
+  })
+  
+  if (!objGroups[subgroup].all.length) {
+  	toggle.disabled = true
+    toggle.style.cursor = "not-allowed"
+  } else {
+    toggle.checked = localStorage.getItem(groupName) == "On"
+    toggle.dispatchEvent(new Event("change"))
+  }
+  document.getElementById("toggle-groups").appendChild(toggleLab)
+}

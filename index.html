@@ -7,22 +7,14 @@
   </head>
   <body>
     <div id="control-btns">
-      <label>
-        <input type="checkbox" id="spc-esri_toggle" />
-        Unfiltered Storm Reports Map (Interactive)
-      </label>
-      <label>
-        <input type="checkbox" id="spc-rss_toggle" />
-        SPC RSS Feed
-      </label>
-      <label>
-        <input type="checkbox" id="spc-reports_toggle" />
-        Full SPC Storm Reports
-      </label>
+      <div class="control-grp" id="toggle-groups"></div>
+      <hr>
+      <div class="control-grp" id="toggles"></div>
     </div>
 
     <div class="container">
-      <div id="spc-reports" class="content"></div>
+      <div id="spc-reports">
+      </div>
       <div id="spc-rss" class="content"></div>
       <div id="spc-esri" class="content"></div>
     </div>
