@@ -188,12 +188,16 @@ function makeToggle(id, name) {
 
 const objGroups = {
   all: [SPCStormReports, SPCReportsESRIMap, SPCRSSFeed],
-  activeReports: {
+  activeReportsGroup: {
     name: "Active Reports",
     all: [SPCStormReports, SPCReportsESRIMap, SPCRSSFeed],
   },
-  forecast: {
+  forecastGroup: {
     name: "Forecast",
+    all: [],
+  },
+  videosGroup: {
+    name: "Video",
     all: [],
   },
 }
@@ -225,10 +229,11 @@ objGroups.all.forEach((obj) => {
 
 for (var subgroup in objGroups) {
   if (!objGroups[subgroup].name) continue
-  let groupName = objGroups[subgroup].name
+  let groupLen = objGroups[subgroup].all.length
+  let groupName = `${objGroups[subgroup].name} (${groupLen})`
   let toggleLab = makeToggle(subgroup, groupName)
   let toggle = toggleLab.firstChild
-  
+
   objGroups[subgroup].all.forEach((obj) => {
     toggle.addEventListener("change", () => {
       localStorage.setItem(groupName, toggle.checked ? "On" : "Off")
@@ -244,9 +249,9 @@ for (var subgroup in objGroups) {
       }
     })
   })
-  
-  if (!objGroups[subgroup].all.length) {
-  	toggle.disabled = true
+
+  if (!groupLen) {
+    toggle.disabled = true
     toggle.style.cursor = "not-allowed"
   } else {
     toggle.checked = localStorage.getItem(groupName) == "On"
