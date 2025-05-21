@@ -1,0 +1,65 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  width: 100%;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+#control-btns {
+  margin: 0;
+  width: 100%;
+  background: #333;
+  color: white;
+  padding: 10px;
+  display: flex;
+  flex-direction: rows;
+  flex-wrap: wrap;
+  margin-bottom: 1em;
+  position: sticky;
+}
+input {
+  margin: 0 0.3rem;
+}
+#control-btns label {
+  margin-right: 15px;
+}
+.container {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+#control-btns > label {
+  display: inline-flex;
+  align-items: center;
+}
+.content {
+  width: 100%;
+  padding: 0 20px;
+  width: calc(100% - 40px);
+}
+#spc-esri {
+  background-color: white;
+}
+#spc-reports {
+  padding: 20px;
+  margin: 0;
+  background-color: aliceblue;
+  height: fit-content;
+  width: 100%;
+}
+#spc-reports > img {
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+#spc-reports > embed {
+  width: fit-content;
+  max-width: calc(100% - 20px);
+  height: 700px;
+  padding: 10px;
+  border: 1px black double;
+}
+#spc-rss {
+  background-color: aliceblue;
+}

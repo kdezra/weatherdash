@@ -1,98 +1,32 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Storm Prediction Center Reports</title>
-</head>
-<body>
-	<button type="button" id="btn-load" style="display:block;">Expand Full Storm Reports</button>
-    	<button type="button" id="btn-unload" style="display:none;">Collapse Storm Reports</button>
-	<div class="spc-main">
-    	<button type="button" id="btn-esri-load" style="display:block;">Load Unfiltered Reports Map (iFrame)</button>
-        <button type="button" id="btn-esri-unload" style="display:none;">Collapse Unfiltered Reports Map (iFrame)</button>
-    	<div id="esri-container"></div>
-  		<div id="spc-container"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Toggle Control Page</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="control-btns">
+      <label>
+        <input type="checkbox" id="spc-esri_toggle" />
+        Unfiltered Storm Reports Map (Interactive)
+      </label>
+      <label>
+        <input type="checkbox" id="spc-rss_toggle" />
+        SPC RSS Feed
+      </label>
+      <label>
+        <input type="checkbox" id="spc-reports_toggle" />
+        Full SPC Storm Reports
+      </label>
     </div>
-  <script>
-  
-  	const spc_container = document.getElementById("spc-container");
-  	const esri_container = document.getElementById("esri-container");
-    const spc_gif = document.getElementById("spc-rpt-gif");
-    const load_btn = document.getElementById("btn-load");
-    const unload_btn = document.getElementById("btn-unload");
-    const load_btn_esri = document.getElementById("btn-esri-load");
-    const unload_btn_esri = document.getElementById("btn-esri-unload");
-    let spc_store = "spcfull";
-    let esri_store = "esriloaded";
-    
-    function getDateString() {
-    	const now = new Date();
-    	const yy = String(now.getFullYear()).slice(-2);
-      	const mm = String(now.getMonth() + 1).padStart(2, '0');
-      	const dd = String(now.getDate()).padStart(2, '0');
-        return(`${yy}${mm}${dd}`)
-    }
-    
-    function loadReports() {
-      localStorage.setItem(spc_store, true);
-      
-      const date = getDateString();
-      spc_container.innerHTML = `<embed type="text/html" src="https://www.spc.noaa.gov/climo/reports/${date}_prt_rpts.html" class="spc-embed"/>`;
-      load_btn.style.display = "none";
-      unload_btn.style.display = "block";
-    }
-    
-    function unloadReports() {
-      localStorage.setItem(spc_store, false);
-      const date = getDateString();
-      spc_container.innerHTML = `<img src="https://www.spc.noaa.gov/climo/reports/${date}_rpts.gif" id="spc-rpt-gif">`;
-      load_btn.style.display = "block";
-      unload_btn.style.display = "none";
-    }
-    //https://www.spc.noaa.gov/climo/gm.php?rpt=250519_rpts
-    function loadEsriReports() {
-    	localStorage.setItem(esri_store, true);
-        
-      	const date = getDateString();
-        esri_container.innerHTML = `<iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"
-src="https://www.spc.noaa.gov/climo/gm.php?rpt=${date}_rpts"></iframe>`
-      	load_btn_esri.style.display = "none";
-      	unload_btn_esri.style.display = "block";
-    }
-    function unloadEsriReports() {
-    	localStorage.setItem(esri_store, false);
-        esri_container.innerHTML = '';
-      	load_btn_esri.style.display = "block";
-      	unload_btn_esri.style.display = "none";
-    }
-    
-  	load_btn.addEventListener("click", loadReports); 
-  	unload_btn.addEventListener("click", unloadReports);
-    load_btn_esri.addEventListener("click", loadEsriReports); 
-  	unload_btn_esri.addEventListener("click", unloadEsriReports); 
-    
-    localStorage.getItem(esri_store) == "true" ? loadEsriReports() : unloadEsriReports();
-    localStorage.getItem(spc_store) == "true" ? loadReports() : unloadReports();
-  </script>
-  <style>
-  	body {
-    	margin: 0;
-        width:100%;
-        font-size: 13px;
-    }
-    .spc-main {
-    	display: flex;
-        flex-direction: row;
-        flex-wrap:wrap;
-    }
-    #spc-container, #esri-container {
-    	width: 100%;
-    }
-    .spc-embed {
-    	width: 100%;
-        min-height: 100vh;
-    }
-  </style>
-</body>
+
+    <div class="container">
+      <div id="spc-esri" class="content"></div>
+      <div id="spc-rss" class="content">
+      </div>
+      <div id="spc-reports" class="content"></div>
+    </div>
+    <script src="script.js"></script>
+  </body>
 </html>
