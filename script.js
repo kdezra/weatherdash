@@ -117,6 +117,51 @@ const SPCRSSFeed = {
   },
 }
 
+const SPCReportsCSV = {
+  id: "spc-csv",
+  name: "SPC RSS Feed",
+  url: "https://www.spc.noaa.gov/products/spcrss.xml",
+  items: [],
+  init: false,
+  refresh: function () {
+    const proxyUrl = proxy + encodeURIComponent(this.url)
+    return fetch(proxyUrl)
+      .then((res) => {
+        if (res.ok) return res.json()
+        throw new Error("Network response was not ok.")
+      })
+      .then((data) => {
+        const xml = new DOMParser().parseFromString(
+          data.contents,
+          "application/xml",
+        )
+        const items = xml.querySelectorAll("item")
+        this.items = new Array(...items).map((i) => new SPCFeedItem(i))
+        this.items.sort((a, b) => -1 * (a.time - b.time))
+        this.init = true
+      })
+      .catch((err) => console.log("Fetch Error:", err))
+  },
+  populate: function () {
+    if (this.items.length == 0) {
+      this.div.innerText = "Failed to load feed."
+      return
+    }
+    this.items.forEach((i) => this.div.appendChild(i.DOM()))
+  },
+  show: async function () {
+    this.heading.style.display = "block"
+    this.wrapper.style.display = "block"
+    if (!this.init) await this.refresh()
+    this.populate()
+  },
+  hide: function () {
+    this.heading.style.display = "none"
+    this.wrapper.style.display = "none"
+    this.div.innerHTML = ""
+  },
+}
+
 class SPCFeedItem {
   constructor(item) {
     this.title = item.querySelector("title")?.textContent || "No title"
@@ -203,7 +248,9 @@ const objGroups = {
 }
 
 objGroups.all.forEach((obj) => {
-  obj.wrapper = document.getElementById(obj.id)
+  obj.wrapper = document.createElement("div")
+  obj.wrapper.id = obj.id
+  document.getElementById("objectContainer").appendChild(obj.wrapper)
   obj.div = document.createElement("div")
   obj.wrapper.className = "object"
   obj.div.className = "content"
