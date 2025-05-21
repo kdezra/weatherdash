@@ -29,6 +29,7 @@ const SPCStormReports = {
   show: async function () {
     if (!this.init) this.refresh()
 
+    this.div.innerHTML = ""
     const embed = document.createElement("embed")
     embed.type = "text/html"
     embed.src = this.embedUrl
@@ -37,7 +38,11 @@ const SPCStormReports = {
   },
   hide: async function () {
     if (!this.init) this.refresh()
-    this.div.innerHTML = `<img src="${this.gifUrl}" id="spc-rpt-gif">`
+    this.div.innerHTML = ""
+    const img = document.createElement("img")
+    img.src = this.gifUrl
+    img.id = "spc-rpt-gif"
+    this.div.appendChild(img)
   },
 }
 
@@ -50,8 +55,17 @@ const SPCReportsESRIMap = {
   },
   show: function () {
     const dateStr = getDateString(new Date(), 6)
-    this.div.innerHTML = `<iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"
-src="https://www.spc.noaa.gov/climo/gm.php?rpt=${dateStr}_rpts"></iframe>`
+
+    this.div.innerHTML = ""
+    const iframe = document.createElement("iframe")
+    const attrs = {
+      width: "100%",
+      height: "400",
+      scrolling: "no",
+      src: `https://www.spc.noaa.gov/climo/gm.php?rpt=${dateStr}_rpts`,
+    }
+    for (var k in attrs) iframe.setAttribute(k, attrs[k])
+    this.div.appendChild(iframe)
   },
   hide: function () {
     this.div.innerHTML = ""
@@ -77,6 +91,9 @@ const SPCRSSFeed = {
         )
         const items = xml.querySelectorAll("item")
         this.items = new Array(...items).map((i) => new SPCFeedItem(i))
+        this.items.sort(
+          (a, b) => -1 * (a.time - b.time),
+        )
         this.init = true
       })
       .catch((err) => console.log("Fetch Error:", err))
@@ -119,6 +136,9 @@ class SPCFeedItem {
   }
   get date() {
     return new Date(this.pubDate).toLocaleString()
+  }
+  get time() {
+  	return new Date(this.pubDate).getTime() 
   }
   get id() {
     let stripped_title = this.title.replace(/\s/g, "")
