@@ -20,20 +20,21 @@ const SPCStormReports = {
   init: false,
   refresh: function () {
     this.init = false
-    const date = new Date()
-    var dateStr = getDateString(date, 6)
-    this.embedUrl = `https://www.spc.noaa.gov/climo/reports/${dateStr}_prt_rpts.html`
-    this.gifUrl = `https://www.spc.noaa.gov/climo/reports/${dateStr}_rpts.gif`
+    this.embedUrl = "https://www.spc.noaa.gov/climo/reports/today_prt_rpts.html"
+    this.gifUrl = "https://www.spc.noaa.gov/climo/reports/today.gif"
     this.init = true
   },
   show: async function () {
     if (!this.init) this.refresh()
-
     this.div.innerHTML = ""
     const embed = document.createElement("embed")
     embed.type = "text/html"
     embed.src = this.embedUrl
     embed.className = "spc-embed"
+    const heading = document.createElement("h2")
+    heading.id = "esri-head"
+    heading.innerText = "Today's Storm Reports"
+    this.div.appendChild(heading)
     this.div.appendChild(embed)
   },
   hide: async function () {
@@ -42,6 +43,10 @@ const SPCStormReports = {
     const img = document.createElement("img")
     img.src = this.gifUrl
     img.id = "spc-rpt-gif"
+    const heading = document.createElement("h2")
+    heading.id = "esri-head"
+    heading.innerText = "Today's Storm Reports"
+    this.div.appendChild(heading)
     this.div.appendChild(img)
   },
 }
@@ -62,9 +67,13 @@ const SPCReportsESRIMap = {
       width: "100%",
       height: "400",
       scrolling: "no",
-      src: `https://www.spc.noaa.gov/climo/gm.php?rpt=${dateStr}_rpts`,
+      src: `https://www.spc.noaa.gov/climo/gm.php?rpt=today`,
     }
     for (var k in attrs) iframe.setAttribute(k, attrs[k])
+    const heading = document.createElement("h2")
+    heading.id = "esri-head"
+    heading.innerText = "Interactive Storm Reports Map"
+    this.div.appendChild(heading)
     this.div.appendChild(iframe)
   },
   hide: function () {
