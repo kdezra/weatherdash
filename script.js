@@ -13,33 +13,34 @@ function appendChildren(parent, children) {
   })
 }
 
+const el = (tag, props = {}, ...children) => {
+  const e = document.createElement(tag)
+  Object.assign(e, props)
+  children.forEach((c) => e.appendChild(c))
+  return e
+}
+
+const elT = (t, txt, ...c) => el(t, { innerText: txt }, ...c)
+const elS = (t, ...c) => el(t, {}, ...c)
+
 const SPCStormReports = {
   id: "spc-reports",
-  name: "Today's SPC Storm Reports",
-  embedUrl: "https://www.spc.noaa.gov/climo/reports/today_prt_rpts.html",
-  gifUrl: "https://www.spc.noaa.gov/climo/reports/today.gif",
+  name: "SPC Storm Reports Map",
+  url: "https://www.spc.noaa.gov/climo/reports/today.gif",
   init: false,
   refresh: function () {
+    const img = el("img", { src: this.url, id: this.id + "_img" })
+    this.div.appendChild(img)
     this.init = true
   },
   show: function () {
-    this.heading.style.display = "block"
     if (!this.init) this.refresh()
-    this.div.innerHTML = ""
-    const embed = document.createElement("embed")
-    embed.type = "text/html"
-    embed.src = this.embedUrl
-    embed.className = "spc-embed"
-    this.div.appendChild(embed)
+    this.heading.style.display = "block"
+    this.wrapper.style.display = "block"
   },
   hide: function () {
-    this.heading.style.display = "block"
-    if (!this.init) this.refresh()
-    this.div.innerHTML = ""
-    const img = document.createElement("img")
-    img.src = this.gifUrl
-    img.id = "spc-rpt-gif"
-    this.div.appendChild(img)
+    this.heading.style.display = "none"
+    this.wrapper.style.display = "none"
   },
 }
 
@@ -48,27 +49,26 @@ const SPCReportsESRIMap = {
   name: "SPC Storm Reports Map (Interactive)",
   url: "https://www.spc.noaa.gov/climo/gm.php?rpt=today",
   init: false,
+  display: function (view) {
+    this.heading.style.display = view
+    this.wrapper.style.display = view
+    this.div.innerHTML = ""
+  },
   refresh: function () {
     this.init = true
   },
   show: function () {
-    this.heading.style.display = "block"
-    this.wrapper.style.display = "block"
-    this.div.innerHTML = ""
-    const iframe = document.createElement("iframe")
-    const attrs = {
+    this.display("block")
+    const iframe = el("iframe", {
       width: "100%",
       height: "400",
       scrolling: "no",
       src: this.url,
-    }
-    for (var k in attrs) iframe.setAttribute(k, attrs[k])
+    })
     this.div.appendChild(iframe)
   },
   hide: function () {
-    this.heading.style.display = "none"
-    this.wrapper.style.display = "none"
-    this.div.innerHTML = ""
+    this.display("none")
   },
 }
 
@@ -90,9 +90,9 @@ const SPCRSSFeed = {
           data.contents,
           "application/xml",
         )
-        const items = xml.querySelectorAll("item")
-        this.items = new Array(...items).map((i) => new SPCFeedItem(i))
-        this.items.sort((a, b) => -1 * (a.time - b.time))
+        this.items = [...xml.querySelectorAll("item")]
+          .map((i) => new SPCFeedItem(i))
+          .sort((a, b) => b.time - a.time)
         this.init = true
       })
       .catch((err) => console.log("Fetch Error:", err))
@@ -119,11 +119,13 @@ const SPCRSSFeed = {
 
 const SPCReportsCSV = {
   id: "spc-csv",
-  name: "SPC RSS Feed",
-  url: "https://www.spc.noaa.gov/products/spcrss.xml",
+  name: "SPC CSV Reports Feed",
+  url: "https://www.spc.noaa.gov/climo/reports/today.csv",
   items: [],
   init: false,
+  csv: null,
   refresh: function () {
+    this.init = false
     const proxyUrl = proxy + encodeURIComponent(this.url)
     return fetch(proxyUrl)
       .then((res) => {
@@ -131,23 +133,55 @@ const SPCReportsCSV = {
         throw new Error("Network response was not ok.")
       })
       .then((data) => {
-        const xml = new DOMParser().parseFromString(
-          data.contents,
-          "application/xml",
-        )
-        const items = xml.querySelectorAll("item")
-        this.items = new Array(...items).map((i) => new SPCFeedItem(i))
-        this.items.sort((a, b) => -1 * (a.time - b.time))
+        this.csv = window.atob(data.contents.split(",")[1])
         this.init = true
       })
-      .catch((err) => console.log("Fetch Error:", err))
   },
   populate: function () {
-    if (this.items.length == 0) {
+    if (!this.csv) {
       this.div.innerText = "Failed to load feed."
       return
     }
-    this.items.forEach((i) => this.div.appendChild(i.DOM()))
+    this.div.innerHTML = ""
+    const lines = this.csv.trim().split("\n")
+    const tables = {
+      t: { header: null, rows: [] },
+      w: { header: null, rows: [] },
+      h: { header: null, rows: [] },
+    }
+    const ctot = { F_Scale: "t", Speed: "w", Size: "h" }
+    let current = null
+
+    for (const line of lines) {
+      const cells = line.split(",")
+      const headerLine = cells.join(",")
+      if (cells[0] == "Time") {
+        current = tables[ctot[cells[1]]]
+        current.header = cells
+      } else if (current) current.rows.push(cells)
+    }
+
+    const th = (t) => el("th", { innerText: t })
+    const td = (t) => el("td", { innerText: t })
+    const makeRow = (r) => el("tr", {}, ...r.map(td))
+
+    const thead = (head) => elS("thead", elS("tr", ...head.map(th)))
+
+    const tableToHTML = ({ header, rows }, title, div) => {
+      div.append(
+        elT("h3", title),
+        el(
+          "table",
+          { border: 1 , className: "report-table"},
+          thead(header),
+          el("tbody", {}, ...rows.map(makeRow)),
+        ),
+      )
+    }
+
+    tableToHTML(tables.t, "Tornado Reports", this.div)
+    tableToHTML(tables.w, "Wind Reports", this.div)
+    tableToHTML(tables.h, "Hail Reports", this.div)
   },
   show: async function () {
     this.heading.style.display = "block"
@@ -187,55 +221,39 @@ class SPCFeedItem {
     let fmt_date = getDateString(new Date(this.pubDate))
     return stripped_title + "-" + fmt_date
   }
+
   DOM() {
-    const titleA = document.createElement("a")
-    titleA.href = this.link
-    titleA.target = "_blank"
-    titleA.innerText = this.title
-
-    const iconSPAN = document.createElement("span")
-    iconSPAN.innerText = this.icon
-
-    const titleDIV = document.createElement("div")
-    titleDIV.className = "title"
-    appendChildren(titleDIV, [iconSPAN, titleA])
-
-    const dateTIME = document.createElement("time")
-    dateTIME.innerText = this.date
-
-    const summary = document.createElement("summary")
-    summary.innerText = "Show Details"
-
-    const descDIV = document.createElement("div")
-    descDIV.innerHTML = this.description
-
-    const details = document.createElement("details")
-    appendChildren(details, [summary, descDIV])
-
-    const wrapperDIV = document.createElement("div")
-    wrapperDIV.className = "feedItem"
-    wrapperDIV.id = this.id
-    appendChildren(wrapperDIV, [titleDIV, dateTIME, details])
-
-    return wrapperDIV
+    const titleA = el("a", {
+      href: this.link,
+      target: "_blank",
+      innerText: this.title,
+    })
+    const iconSPAN = elT("span", this.icon)
+    const summary = elT("summary", "Show Details")
+    const descDIV = el("div", { innerHTML: this.description })
+    return el(
+      "div",
+      { className: "feedItem", id: this.id },
+      el("div", { className: "title" }, iconSPAN, titleA),
+      el("time", { innerText: this.date }),
+      elS("details", summary, descDIV),
+    )
   }
 }
 
 function makeToggle(id, name) {
   const toggleLab = document.createElement("label")
-  const toggle = document.createElement("input")
-  toggle.type = "checkbox"
-  toggle.id = id + "_toggle"
+  const toggle = el("input", { type: "checkbox", id: id + "_toggle" })
   toggleLab.appendChild(toggle)
   toggleLab.append(name)
   return toggleLab
 }
 
 const objGroups = {
-  all: [SPCStormReports, SPCReportsESRIMap, SPCRSSFeed],
+  all: [SPCStormReports, SPCReportsCSV, SPCReportsESRIMap, SPCRSSFeed],
   activeReportsGroup: {
     name: "Active Reports",
-    all: [SPCStormReports, SPCReportsESRIMap, SPCRSSFeed],
+    all: [SPCStormReports, SPCReportsESRIMap, SPCReportsCSV, SPCRSSFeed],
   },
   forecastGroup: {
     name: "Forecast",
@@ -247,29 +265,49 @@ const objGroups = {
   },
 }
 
+function updateLocalStorage(id, value) {
+  let storage = {}
+  try {
+    storage = JSON.parse(localStorage.__SPCRPTio_storage || '{}')
+  } catch (e) {
+    console.warn("Invalid JSON in __SPCRPTio_storage, resetting.")
+  }
+  storage[id] = value
+  localStorage.__SPCRPTio_storage = JSON.stringify(storage)
+}
+
+function getFromLocalStorage(id) {
+  try {
+    const store = JSON.parse(localStorage.__SPCRPTio_storage || '{}')
+    return store[id] || "Off"
+  } catch (e) {
+    console.warn("Corrupted __SPCRPTio_storage; returning Off.")
+    return "Off"
+  }
+}
+
 objGroups.all.forEach((obj) => {
-  obj.wrapper = document.createElement("div")
-  obj.wrapper.id = obj.id
+  obj.div = el("div", { className: "content" })
+  obj.wrapper = el("div", { id: obj.id, className: "object" }, obj.div)
   document.getElementById("objectContainer").appendChild(obj.wrapper)
-  obj.div = document.createElement("div")
-  obj.wrapper.className = "object"
-  obj.div.className = "content"
-  obj.heading = document.createElement("h2")
-  obj.heading.id = obj.id + "_head"
-  obj.heading.className = "objectH2"
-  obj.heading.innerText = obj.name
+  obj.heading = el("h2", {
+    id: obj.id + "_head",
+    className: "objectH2",
+    innerText: obj.name,
+  })
   obj.heading.style.display = "none"
   obj.toggleLab = makeToggle(obj.id, obj.name)
   obj.toggle = obj.toggleLab.firstChild
 
   obj.toggle.addEventListener("change", () => {
     obj.toggle.checked
-      ? (localStorage.setItem(obj.id, "On"), obj.show())
-      : (localStorage.setItem(obj.id, "Off"), obj.hide())
+      ? (updateLocalStorage(obj.id, "On"), obj.show())
+      : (updateLocalStorage(obj.id, "Off"), obj.hide())
   })
 
-  obj.toggle.checked = localStorage.getItem(obj.id) == "On"
+  obj.toggle.checked = getFromLocalStorage(obj.id) == "On"
   obj.toggle.dispatchEvent(new Event("change"))
+  
   appendChildren(obj.wrapper, [obj.heading, obj.div])
   document.getElementById("toggles").appendChild(obj.toggleLab)
 })
@@ -283,7 +321,7 @@ for (var subgroup in objGroups) {
 
   objGroups[subgroup].all.forEach((obj) => {
     toggle.addEventListener("change", () => {
-      localStorage.setItem(groupName, toggle.checked ? "On" : "Off")
+      updateLocalStorage(subgroup, toggle.checked ? "On" : "Off")
       if (obj.toggle.checked != toggle.checked) {
         obj.toggle.checked = toggle.checked
         obj.toggle.dispatchEvent(new Event("change"))
@@ -292,7 +330,7 @@ for (var subgroup in objGroups) {
     obj.toggle.addEventListener("change", () => {
       if (!obj.toggle.checked) {
         toggle.checked = false
-        localStorage.setItem(groupName, "Off")
+        updateLocalStorage(subgroup, "Off")
       }
     })
   })
@@ -301,7 +339,7 @@ for (var subgroup in objGroups) {
     toggle.disabled = true
     toggle.style.cursor = "not-allowed"
   } else {
-    toggle.checked = localStorage.getItem(groupName) == "On"
+    toggle.checked = localStorage.getItem(subgroup) == "On"
     toggle.dispatchEvent(new Event("change"))
   }
   document.getElementById("toggle-groups").appendChild(toggleLab)

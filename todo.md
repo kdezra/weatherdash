@@ -6,7 +6,7 @@
 - [ ] Move Reports to use CSV instead of embedding HTML?
 - [ ] Doppler Radar
 - [ ] Local
-    - [ ] Add weather station search
+    - [ ] Add weather forecast office search (https://www.spc.noaa.gov/misc/NWS_WFO_ID.txt)
     - [ ] Add highway video streams from state 511 pages (could I maybe highlight those near inclement weather?)
         - [ ] At minimum: get list of links to state 511s
 - [ ] Add new favicon
